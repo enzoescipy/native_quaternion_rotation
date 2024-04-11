@@ -29,7 +29,7 @@ class NativeQuaternionRotationPlugin: FlutterPlugin {
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
 
     mSensorManager = flutterPluginBinding.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) // this section is the sensor-defining part.
+    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR) // this section is the sensor-defining part.
 
     eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, NATIVE_QUATERNION_ROTATION_EVENVT_CHANNEL)
     eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
