@@ -1,5 +1,5 @@
 name: native_quaternion_rotation
-description: "A new Flutter plugin project."
+description: "get native android (ios for future) rotation vector."
 version: 0.0.1
 homepage:
 
