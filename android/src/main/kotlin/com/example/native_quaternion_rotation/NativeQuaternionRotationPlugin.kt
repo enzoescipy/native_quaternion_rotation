@@ -13,69 +13,52 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.observables.ConnectableObservable
 
 
 /** NativeQuaternionRotationPlugin */
-class NativeQuaternionRotationPlugin: FlutterPlugin, SensorEventListener {
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
+class NativeQuaternionRotationPlugin: FlutterPlugin {
   private lateinit var eventChannel : EventChannel
-  private var disposable: Disposable? = null
 
   private lateinit var  mSensorManager: SensorManager
   private var mQuaternion: Sensor? = null
+  private var mListener: SensorEventListener? = null
 
   private val NATIVE_QUATERNION_ROTATION_EVENVT_CHANNEL =  "native_quaternion_rotation_event_channel"
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+
     mSensorManager = flutterPluginBinding.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) // this section is the sensor-defining part.
 
     eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, NATIVE_QUATERNION_ROTATION_EVENVT_CHANNEL)
+    eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
 
-    mSensorManager.registerListener(this, mQuaternion, SensorManager.SENSOR_DELAY_NORMAL)
-  }
+      override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        mListener = RotationSensorListener(events!!);
+        mSensorManager.registerListener(mListener, mQuaternion, SensorManager.SENSOR_DELAY_NORMAL)
 
-  private fun observeQuaternion(events: EventChannel.EventSink?) {
-//    if (disposable == null) {
-//      disposable =
-//        }
-//    }
-  }
+      }
+      override fun onCancel(arguments: Any?) {
+        mSensorManager.unregisterListener(mListener)
+      }
 
-  private fun getQuaternion() {
-    return Sensor.TYPE_ROTATION
+    })
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    mSensorManager.unregisterListener(this)
+    eventChannel.setStreamHandler(null)
   }
+
 }
 
-
-class SensorActivity : Activity(), SensorEventListener {
-  private val mSensorManager: SensorManager
-  private val mQuaternion: Sensor?
-
-  init {
-    mSensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-  }
-
-  override fun onResume() {
-    super.onResume()
-    mSensorManager.registerListener(this, mQuaternion, SensorManager.SENSOR_DELAY_NORMAL)
-  }
-
-  override fun onPause() {
-    super.onPause()
-    mSensorManager.unregisterListener(this)
-  }
-
+class RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
+  var events = events
   override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-  override fun onSensorChanged(event: SensorEvent) {}
+  override fun onSensorChanged(event: SensorEvent) {
+    events.success(event.values)
+  }
+
 }
 
 

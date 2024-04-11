@@ -23,10 +23,6 @@ abstract class NativeQuaternionRotationPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
-  }
-
   Stream? getQuaternionStream() {
     throw UnimplementedError('getQuaternionStream() has not been implemented.');
   }
