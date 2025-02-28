@@ -16,49 +16,150 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.observables.ConnectableObservable
 
 
-/** NativeQuaternionRotationPlugin */
-class NativeQuaternionRotationPlugin: FlutterPlugin {
-  private lateinit var eventChannel : EventChannel
 
-  private lateinit var  mSensorManager: SensorManager
-  private var mQuaternion: Sensor? = null
-  private var mListener: SensorEventListener? = null
 
-  private val NATIVE_QUATERNION_ROTATION_EVENVT_CHANNEL =  "native_quaternion_rotation_event_channel"
+class NativeQuaternionRotationPlugin: FlutterPlugin, MethodCallHandler {
+    private lateinit var channel : MethodChannel
 
-  override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
 
-    mSensorManager = flutterPluginBinding.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR) // this section is the sensor-defining part.
+    private lateinit var eventChannel : EventChannel
+  
+    private lateinit var  mSensorManager: SensorManager
+    private var mQuaternion: Sensor? = null
+    private var mGameQuaternion: Sensor? = null
+    private var mListener: SensorEventListener? = null
 
-    eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, NATIVE_QUATERNION_ROTATION_EVENVT_CHANNEL)
-    eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+    private lateinit var GAME_ROTATION_QUATERNION_eventChannel: EventChannel
+    private lateinit var ROTATION_QUATERNION_eventChannel: EventChannel
+    private lateinit var GAME_ROTATION_VECTOR_eventChannel: EventChannel
+    private lateinit var ROTATION_VECTOR_eventChannel: EventChannel
+  
+    private val GAME_ROTATION_QUATERNION =  "game_rotation_quaternion_event_channel"
+    private val ROTATION_QUATERNION =  "rotation_quaternion_event_channel"
+    private val GAME_ROTATION_VECTOR =  "game_rotation_vector_event_channel"
+    private val ROTATION_VECTOR =  "rotation_vector_event_channel"
 
-      override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-        mListener = RotationSensorListener(events!!);
-        mSensorManager.registerListener(mListener, mQuaternion, SensorManager.SENSOR_DELAY_NORMAL)
+    private var EMIT_SPEED = SensorManager.SENSOR_DELAY_GAME
 
-      }
-      override fun onCancel(arguments: Any?) {
-        mSensorManager.unregisterListener(mListener)
-      }
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        when (call.method) {
+            "SENSOR_DELAY_GAME" -> {EMIT_SPEED = SensorManager.SENSOR_DELAY_GAME}
+            "SENSOR_DELAY_FASTEST" -> {EMIT_SPEED = SensorManager.SENSOR_DELAY_FASTEST}
+            "SENSOR_DELAY_NORMAL" -> {EMIT_SPEED = SensorManager.SENSOR_DELAY_NORMAL}
+            "SENSOR_DELAY_UI" -> {EMIT_SPEED = SensorManager.SENSOR_DELAY_UI}
+        }
+    }
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "native_quaternion_rotation")
+        channel.setMethodCallHandler(this)
 
-    })
-  }
+      mSensorManager = flutterPluginBinding.applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+      mQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) // this section is the sensor-defining part.
+      mGameQuaternion = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR) // this section is the sensor-defining part.
+  
+      GAME_ROTATION_QUATERNION_eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, GAME_ROTATION_QUATERNION)
+      ROTATION_QUATERNION_eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, ROTATION_QUATERNION)
+      GAME_ROTATION_VECTOR_eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, GAME_ROTATION_VECTOR)
+      ROTATION_VECTOR_eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, ROTATION_VECTOR)
 
-  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    eventChannel.setStreamHandler(null)
-  }
+      GAME_ROTATION_QUATERNION_eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+          mListener = GAME_ROTATION_QUATERNION_RotationSensorListener(events!!);
+          mSensorManager.registerListener(mListener, mQuaternion, EMIT_SPEED)
+  
+        }
+        override fun onCancel(arguments: Any?) {
+          mSensorManager.unregisterListener(mListener)
+        }
+      })
 
+      ROTATION_QUATERNION_eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+          mListener = ROTATION_QUATERNION_RotationSensorListener(events!!);
+          mSensorManager.registerListener(mListener, mQuaternion, EMIT_SPEED)
+  
+        }
+        override fun onCancel(arguments: Any?) {
+          mSensorManager.unregisterListener(mListener)
+        }
+      })
+
+      GAME_ROTATION_VECTOR_eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+          mListener = GAME_ROTATION_VECTOR_RotationSensorListener(events!!);
+          mSensorManager.registerListener(mListener, mQuaternion, EMIT_SPEED)
+  
+        }
+        override fun onCancel(arguments: Any?) {
+          mSensorManager.unregisterListener(mListener)
+        }
+      })
+
+      ROTATION_VECTOR_eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+          mListener = ROTATION_VECTOR_RotationSensorListener(events!!);
+          mSensorManager.registerListener(mListener, mQuaternion, EMIT_SPEED)
+  
+        }
+        override fun onCancel(arguments: Any?) {
+          mSensorManager.unregisterListener(mListener)
+        }
+      })
+    }
+  
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+      GAME_ROTATION_QUATERNION_eventChannel.setStreamHandler(null)
+      ROTATION_QUATERNION_eventChannel.setStreamHandler(null)
+      GAME_ROTATION_VECTOR_eventChannel.setStreamHandler(null)
+      ROTATION_VECTOR_eventChannel.setStreamHandler(null)
+    }
+  
 }
 
-class RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
+
+
+
+
+
+
+
+
+
+class GAME_ROTATION_QUATERNION_RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
   var events = events
   override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
   override fun onSensorChanged(event: SensorEvent) {
-    events.success(event.values)
+    var quater = FloatArray(4)
+    SensorManager.getQuaternionFromVector(quater, event.values.clone())
+    events.success(quater)
   }
+}
 
+class ROTATION_QUATERNION_RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
+    var events = events
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+    override fun onSensorChanged(event: SensorEvent) {
+        var quater = FloatArray(4)
+        SensorManager.getQuaternionFromVector(quater, event.values.clone())
+        events.success(quater)
+    }
 }
 
 
+class GAME_ROTATION_VECTOR_RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
+    var events = events
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+    override fun onSensorChanged(event: SensorEvent) {
+        events.success(event.values)
+    }
+}
+  
+
+class ROTATION_VECTOR_RotationSensorListener(events: EventChannel.EventSink) : SensorEventListener {
+    var events = events
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+    override fun onSensorChanged(event: SensorEvent) {
+        events.success(event.values)
+    }
+}
+  

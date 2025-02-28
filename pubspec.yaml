@@ -1,6 +1,6 @@
 name: native_quaternion_rotation
-description: "get native android (ios for future) rotation vector."
-version: 0.0.11
+description: "get native android (ios for future) rotation vector's quaternion, normalized."
+version: 0.0.50
 homepage:
 
 environment:

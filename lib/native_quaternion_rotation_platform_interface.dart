@@ -23,7 +23,38 @@ abstract class NativeQuaternionRotationPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Stream? getQuaternionStream() {
+
+  void setStreamSpeedToFastest() {
     throw UnimplementedError('getQuaternionStream() has not been implemented.');
   }
+
+  void setStreamSpeedToGame() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  void setStreamSpeedToUI() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  void setStreamSpeedToNormal() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  Stream? getGameQuaternionEventStream() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  Stream? getQuaternionEventStream() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  Stream? getGameRotationVectorEventStream() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+  Stream? getRotationVectorEventStream() {
+    throw UnimplementedError('getQuaternionStream() has not been implemented.');
+  }
+
+
 }

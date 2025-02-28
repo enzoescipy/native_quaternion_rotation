@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/services.dart';
 import 'package:native_quaternion_rotation/native_quaternion_rotation.dart';
@@ -24,7 +25,10 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    _quaternionRotationStreamSubscription = _native_quaternion_rotation.getQuaternionStream()?.listen((event) {
+    _native_quaternion_rotation.setStreamSpeedToGame();
+
+    _quaternionRotationStreamSubscription = _native_quaternion_rotation.getGameQuaternionEventStream()?.listen((event) {
+      log(event.toString());
       setState(() {
         _quaternionRotation = event;
       });
